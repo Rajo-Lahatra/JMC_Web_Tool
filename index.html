@@ -922,19 +922,24 @@
 
     function empty(){ return `<div style="color:var(--muted);font-size:12px;padding:8px">Aucun dossier</div>`; }
 
-   function renderBoard(){
+  function renderBoard(){
   const list = applyFilters(MISSIONS);
 
-  // On masque définitivement le kanban
-  $kanban.style.display = 'none';
-  $kanban.innerHTML = ''; // pas de colonnes, pas de DnD
+  // Forcer la vue Tableau uniquement
+  if ($kanban) {
+    $kanban.style.display = 'none';
+    $kanban.innerHTML = '';   // on vide toute trace de cartes/colonnes
+  }
 
-  // On affiche la vue tableau uniquement
-  $tableWrap.style.display = 'block';
-  $tableWrap.innerHTML = renderTableView(list);
+  if ($tableWrap) {
+    $tableWrap.style.display = 'block';
+    $tableWrap.innerHTML = renderTableView(list);
+  }
 
-  // Par sécurité, le libellé du bouton (invisible) est standardisé
-  if ($btnToggleView) $btnToggleView.textContent = '🧩 Vue kanban';
+  // Si le bouton existe encore dans le DOM (même caché via CSS), on garde un libellé cohérent
+  if ($btnToggleView) {
+    $btnToggleView.textContent = '🧩 Vue kanban';
+  }
 }
       $tableWrap.style.display = 'none';
       $kanban.style.display = 'grid';
