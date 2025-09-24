@@ -268,7 +268,10 @@
     <section id="kanban" class="board" aria-live="polite"></section>
     <section id="tableWrap" class="table-container" style="display:none"></section>
 
-    <div class="footer">Prototype local (HTML+JS). Données et documents stockés dans votre navigateur (localStorage). Aucun envoi externe.</div>
+  <div class="footer">
+  <span class="requires-guest">Mode déconnecté : données locales (prévisualisation). Connectez-vous pour activer la base en ligne.</span>
+  <span class="requires-auth">Connecté : données et documents synchronisés avec la base en ligne (Supabase).</span>
+</div>
 
     <details style="margin-top:8px" open>
       <summary style="cursor:pointer">Tests automatiques (qualité)</summary>
@@ -1607,7 +1610,37 @@ if (window.supabase && window.supabase.auth) {
     try { await enableSupabaseSync(); } catch {}
   }
 })();
+// Barre de connexion/déconnexion (utilise window.appAuth défini dans <head>)
+  (function wireAuth() {
+    const $login = document.getElementById('btnLogin');
+    const $logout = document.getElementById('btnLogout');
+    const $email = document.getElementById('loginEmail');
+    const $info  = document.getElementById('sessionInfo');
 
+    if ($login) $login.onclick = async () => {
+      const email = ($email?.value || '').trim();
+      if (!email) { alert('Veuillez saisir votre e-mail.'); return; }
+      try {
+        await window.appAuth.signInWithEmailOtp(email);
+        alert('Lien magique envoyé. Consultez votre e-mail.');
+      } catch (e) {
+        alert('Erreur de connexion : ' + e.message);
+      }
+    };
+
+    if ($logout) $logout.onclick = async () => {
+      try { await window.appAuth.signOut(); } catch(e) { alert(e.message); }
+    };
+
+    // Affichage périodique de l'état de session
+    (async function refreshSessionBanner() {
+      try {
+        const { data: { user } } = await window.supabase.auth.getUser();
+        if ($info) $info.textContent = user ? `Connecté : ${user.email}` : 'Déconnecté';
+      } catch {}
+      setTimeout(refreshSessionBanner, 4000);
+    })();
+  })();
   </script>
 </body>
 </html>
