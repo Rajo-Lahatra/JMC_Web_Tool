@@ -935,34 +935,6 @@
     $tableWrap.style.display = 'block';
     $tableWrap.innerHTML = renderTableView(list);
   }
-
-  // Si le bouton existe encore dans le DOM (même caché via CSS), on garde un libellé cohérent
-  if ($btnToggleView) {
-    $btnToggleView.textContent = '🧩 Vue kanban';
-  }
-}
-      $tableWrap.style.display = 'none';
-      $kanban.style.display = 'grid';
-
-      const cols = STAGES.map(s=>({stage:s.id, name:s.name, financial:s.financial, cards:[]}));
-      list.forEach(m=>{ const c = cols.find(c=>c.stage===m.stage); if(c) c.cards.push(m); });
-
-      $kanban.innerHTML = cols.map(col=>{
-        const cards = col.cards.map(m=>cardHTML(m)).join('');
-        return `<div class="col ${col.financial?'financial':''}">
-          <h3>${col.name} · ${col.cards.length}</h3>
-          <div class="lane" data-stage="${col.stage}" ondragover="dragOver(event)" ondrop="dropCard(event)">${cards || empty()}</div>
-        </div>`;
-      }).join('');
-
-      document.querySelectorAll('.card').forEach(el=>{
-        el.setAttribute('draggable','true');
-        el.addEventListener('dragstart', dragStart);
-      });
-
-      $btnToggleView.textContent = '🗂️ Vue tableau';
-    }
-
     function renderTableView(list){
       const rows = list.map(m => `
         <tr>
