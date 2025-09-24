@@ -218,10 +218,6 @@
     /* Collaborateurs */
     .pill{display:inline-block;padding:3px 8px;border:1px solid var(--border);border-radius:999px;background:#fff;color:var(--muted);font-size:12px}
 
-    /* Hooks d'auth pour masquer/afficher des blocs sans JS supplémentaire */
-    [data-auth="out"] .requires-auth { display:none !important; }
-    [data-auth="in"]  .requires-guest { display:none !important; }
-
     /* Réactivité */
     @media (max-width:1400px){.board{grid-template-columns:repeat(3,1fr)}}
     @media (max-width:1024px){.board{grid-template-columns:repeat(2,1fr)}}
@@ -232,22 +228,12 @@
       .row{grid-template-columns:1fr}
     }
   </style>
+  <style>
+  #btnToggleView{ display:none !important; }
+</style>
 </head>
 <body>
   <header>
-    <div class="wrap">
-      <!-- Auth bar (connexion/déconnexion) -->
-<div class="requires-guest" style="display:flex; gap:8px; align-items:center; margin-top:8px;">
-  <input id="loginEmail" type="email" placeholder="Votre e-mail professionnel" 
-         style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;min-width:260px" />
-  <button class="btn" id="btnLogin">Se connecter</button>
-  <span class="sub">Un lien magique vous sera envoyé.</span>
-</div>
-
-<div class="requires-auth" style="display:flex; gap:8px; align-items:center; margin-top:8px;">
-  <span class="sub" id="sessionInfo">Connecté</span>
-  <button class="btn" id="btnLogout">Se déconnecter</button>
-</div>
       <div class="toolbar">
         <input id="q" type="search" placeholder="Rechercher (client, mission, référence, équipe)…" />
         <select id="serviceLine">
@@ -881,7 +867,7 @@
        Rendu des vues (Kanban et Tableau)
        ========================== */
     let MISSIONS = Store.load();
-    let currentView = 'kanban'; // 'kanban' | 'table'
+    let currentView = 'table'; // 'kanban' | 'table'
 
     const $logo = document.getElementById('logo');
     const $logoInput = document.getElementById('logoInput');
@@ -936,14 +922,20 @@
 
     function empty(){ return `<div style="color:var(--muted);font-size:12px;padding:8px">Aucun dossier</div>`; }
 
-    function renderBoard(){
-      const list = applyFilters(MISSIONS);
-      if(currentView === 'table'){
-        $kanban.style.display = 'none';
-        $tableWrap.style.display = 'block';
-        $tableWrap.innerHTML = renderTableView(list);
-        return;
-      }
+   function renderBoard(){
+  const list = applyFilters(MISSIONS);
+
+  // On masque définitivement le kanban
+  $kanban.style.display = 'none';
+  $kanban.innerHTML = ''; // pas de colonnes, pas de DnD
+
+  // On affiche la vue tableau uniquement
+  $tableWrap.style.display = 'block';
+  $tableWrap.innerHTML = renderTableView(list);
+
+  // Par sécurité, le libellé du bouton (invisible) est standardisé
+  if ($btnToggleView) $btnToggleView.textContent = '🧩 Vue kanban';
+}
       $tableWrap.style.display = 'none';
       $kanban.style.display = 'grid';
 
@@ -1625,28 +1617,6 @@ if (window.supabase && window.supabase.auth) {
       try { await enableSupabaseSync(); } catch(e){ console.warn('bootstrapCloud:', e?.message || e); }
     }
   })();
-// Barre de connexion/déconnexion (utilise window.appAuth défini dans <head>)
-  (function wireAuth() {
-    const $login = document.getElementById('btnLogin');
-    const $logout = document.getElementById('btnLogout');
-    const $email = document.getElementById('loginEmail');
-    const $info  = document.getElementById('sessionInfo');
-
-    if ($login) $login.onclick = async () => {
-      const email = ($email?.value || '').trim();
-      if (!email) { alert('Veuillez saisir votre e-mail.'); return; }
-      try {
-        await window.appAuth.signInWithEmailOtp(email);
-        alert('Lien magique envoyé. Consultez votre e-mail.');
-      } catch (e) {
-        alert('Erreur de connexion : ' + e.message);
-      }
-    };
-
-    if ($logout) $logout.onclick = async () => {
-      try { await window.appAuth.signOut(); } catch(e) { alert(e.message); }
-    };
-
     // Affichage périodique de l'état de session
     (async function refreshSessionBanner() {
       try {
