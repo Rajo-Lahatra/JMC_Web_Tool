@@ -47,22 +47,27 @@
       })();
 
       // Helpers simples utilisables dans le body
-      window.appAuth = {
-        async signInWithEmailOtp(email) {
-          const { error } = await window.supabase.auth.signInWithOtp({ email });
-          if (error) throw error;
-          return true;
-        },
-        async signOut() {
-          const { error } = await window.supabase.auth.signOut();
-          if (error) throw error;
-          return true;
-        },
-        async getUser() {
-          const { data: { user } } = await window.supabase.auth.getUser();
-          return user;
-        }
-      };
+     window.appAuth = {
+  async signInWithEmailOtp(email) {
+    // Redirige vers la page en cours (domaine Vercel en prod, localhost en dev)
+    const redirectTo = window.location.origin + window.location.pathname;
+    const { error } = await window.supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: redirectTo }
+    });
+    if (error) throw error;
+    return true;
+  },
+  async signOut() {
+    const { error } = await window.supabase.auth.signOut();
+    if (error) throw error;
+    return true;
+  },
+  async getUser() {
+    const { data: { user } } = await window.supabase.auth.getUser();
+    return user;
+  }
+};
     }
   </script>
 
