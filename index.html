@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>J&M Consulting Guinée — Suivi des missions</title>
+  <style>
+    :root{
+      /* Thème doux */
+      --bg:#f9f6f1;
+      --panel:#ffffff;
+      --muted:#6b7280;
+      --text:#1f2937;
+      --primary:#2563eb;
+      --accent:#10b981;
+      --warn:#f59e0b;
+      --danger:#ef4444;
+      --chip:#f3f4f6;
+      --border:#d1d5db;
+
+      --financial-bg:#fffdf3;
+      --financial-border:#facc15;
+
+      --tag-bg:#fafafa;
+      --tag-text:#374151;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;background:var(--bg);color:var(--text);
+      font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial
+    }
+    header{
+      position:sticky;top:0;z-index:5;background:rgba(255,255,255,.9);
+      backdrop-filter:blur(8px);border-bottom:1px solid var(--border)
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:16px}
+    h1{font-size:20px;margin:0 0 4px 0}
+    h2,h3{margin:0}
+    .sub{color:var(--muted);font-size:13px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand img{height:48px;object-fit:contain;display:none}
+
+    .toolbar{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-top:12px}
+    input[type="search"], select{
+      background:#fff;border:1px solid var(--border);color:var(--text);
+      border-radius:10px;padding:10px
+    }
+    .btn{
+      border:1px solid var(--border);background:#fff;color:var(--text);
+      padding:10px 12px;border-radius:10px;cursor:pointer
+    }
+    .btn.primary{background:linear-gradient(135deg,#93c5fd,#60a5fa);color:#0b1225;border:0;font-weight:600}
+    .btn.ghost{background:transparent}
+    .btn.icon{padding:6px 8px;border-radius:8px}
+    .btn.small{padding:6px 8px;border-radius:8px;font-size:12px}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .chip{
+      background:var(--chip);color:var(--muted);
+      padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px
+    }
+
+    main.wrap{padding-top:14px}
+
+    /* Kanban */
+    .board{display:grid;grid-template-columns:repeat(9,1fr);gap:12px;margin-top:8px}
+    .col{
+      background:var(--panel);border:1px solid var(--border);border-radius:16px;
+      display:flex;flex-direction:column;min-height:220px;overflow:hidden
+    }
+    .col.financial{background:var(--financial-bg);border-color:var(--financial-border)}
+    .col h3{
+      margin:0;padding:12px 12px;border-bottom:1px solid var(--border);
+      font-size:13px;letter-spacing:.2px;text-transform:uppercase;color:var(--muted)
+    }
+    .col.financial h3{border-color:var(--financial-border)}
+    .lane{padding:12px;display:flex;flex-direction:column;gap:12px;min-height:120px}
+    .lane.drop-target{outline:2px dashed var(--primary);outline-offset:-6px;border-radius:12px}
+
+    .card{
+      background:#fff;border:1px solid var(--border);border-radius:14px;
+      padding:12px;display:flex;flex-direction:column;gap:8px
+    }
+    .card.financial{background:var(--financial-bg);border-color:var(--financial-border)}
+    .card .title{font-weight:600}
+    .card-actions{display:flex;gap:6px;margin-top:6px;margin-bottom:4px;justify-content:flex-end}
+    .meta{display:flex;flex-wrap:wrap;gap:6px}
+    .tag{
+      font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);
+      background:var(--tag-bg);color:var(--tag-text)
+    }
+    .tag.primary{border-color:#60a5fa;color:#1e40af;background:#eff6ff}
+    .tag.green{border-color:#86efac;color:#065f46;background:#ecfdf5}
+    .tag.amber{border-color:#fcd34d;color:#78350f;background:#fffbeb}
+    .tag.red{border-color:#fecaca;color:#7f1d1d;background:#fff1f2}
+    .tag.deadline{background:#fff1f2;border-color:#fecaca;color:#7f1d1d}
+    .tag.financial{background:#fffdf3;border-color:#fde68a}
+
+    .progress{height:6px;background:#f3f4f6;border-radius:999px;overflow:hidden;border:1px solid var(--border)}
+    .bar{height:100%;width:0;background:linear-gradient(90deg,#60a5fa,#3b82f6)}
+
+    .footer{color:var(--muted);font-size:12px;margin:12px 0 32px}
+
+    /* Drawer */
+    .drawer{position:fixed;inset:0;display:none}
+    .drawer.open{display:block}
+    .overlay{position:absolute;inset:0;background:rgba(0,0,0,.2)}
+    .sheet{
+      position:absolute;right:0;top:0;height:100%;width:min(720px,100%);
+      background:var(--panel);border-left:1px solid var(--border);padding:16px;overflow:auto
+    }
+    .sheet h2{margin:0 0 8px 0}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .kv{
+      background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px
+    }
+    .kv.financial{background:var(--financial-bg);border-color:var(--financial-border)}
+    .kv .k{color:var(--muted);font-size:12px}
+    .kv .v{font-weight:600}
+    .timeline{margin-top:12px}
+    .timeline .item{display:flex;gap:8px;align-items:flex-start;margin:8px 0}
+    .dot{width:10px;height:10px;border-radius:50%;background:var(--primary);margin-top:6px}
+    .notes-block{margin-top:12px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px}
+    .notes-block .title{font-weight:600;margin-bottom:4px}
+
+    .docs{margin-top:12px}
+    .doc{
+      display:flex;justify-content:space-between;gap:8px;align-items:center;
+      border:1px solid var(--border);border-radius:10px;padding:8px;background:#fff
+    }
+    .doc small{color:var(--muted)}
+
+    /* Modal */
+    dialog{border:1px solid var(--border);border-radius:16px;background:var(--panel);color:var(--text);padding:0;max-width:920px;width:calc(100% - 24px)}
+    dialog::backdrop{background:rgba(0,0,0,.2)}
+    .modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)}
+    .modal-body{padding:16px}
+    .form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form label{font-size:12px;color:var(--muted)}
+    .form input,.form select,.form textarea{width:100%;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text)}
+    .form textarea{min-height:120px;white-space:pre-wrap}
+    .modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid var(--border)}
+
+    /* Tableau */
+    .table-container{margin-top:12px;background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+    .mission-table{width:100%;border-collapse:collapse}
+    .mission-table th,.mission-table td{border-bottom:1px solid var(--border);padding:12px;text-align:left;vertical-align:top}
+    .mission-table thead th{background:var(--chip);color:var(--muted);font-weight:600}
+    .mission-table tbody tr:hover{background:#fafafa}
+
+    /* Collaborateurs */
+    .pill{display:inline-block;padding:3px 8px;border:1px solid var(--border);border-radius:999px;background:#fff;color:var(--muted);font-size:12px}
+
+    /* Réactivité */
+    @media (max-width:1400px){.board{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width:1024px){.board{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:900px){
+      .toolbar{grid-template-columns:1fr;grid-auto-rows:auto}
+      .board{grid-template-columns:1fr}
+      .form{grid-template-columns:1fr}
+      .row{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="brand">
+        <img id="logo" alt="Logo J&M"/>
+        <div>
+          <h1>J&M Consulting Guinée — Suivi des missions</h1>
+          <div class="sub">Pipeline : Opportunité → Lettre de mission signée → Travail Staff → Revue Manager → Revue Senior Manager → Validation Associé(s) → Livrables → Facturation → Recouvrement → Clôture</div>
+        </div>
+        <label class="btn" style="margin-left:auto">Définir le logo…<input id="logoInput" type="file" accept="image/*" style="display:none"></label>
+      </div>
+      <div class="toolbar">
+        <input id="q" type="search" placeholder="Rechercher (client, mission, référence, équipe)…" />
+        <select id="serviceLine">
+          <option value="">Toutes les lignes de service</option>
+          <option value="TLS">TLS (Tax & Legal Services)</option>
+          <option value="GCS">GCS (Global Compliance Services)</option>
+          <option value="LS">LS (Litigation Services)</option>
+          <option value="Advisory">Advisory</option>
+        </select>
+        <select id="stage"></select>
+        <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+          <select id="associate">
+            <option value="">Tous les associés</option>
+          </select>
+          <button class="btn" id="btnToggleView">🗂️ Vue tableau</button>
+          <button class="btn" id="btnExport">Exporter CSV</button>
+          <button class="btn" id="btnPeople">Gérer les collaborateurs</button>
+          <button class="btn primary" id="btnAdd">Nouvelle mission</button>
+        </div>
+      </div>
+      <div class="chips" id="legend"></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Conteneur d'affichage (Kanban OU Tableau) -->
+    <section id="kanban" class="board" aria-live="polite"></section>
+    <section id="tableWrap" class="table-container" style="display:none"></section>
+
+    <div class="footer">Prototype local (HTML+JS). Données et documents stockés dans votre navigateur (localStorage). Aucun envoi externe.</div>
+
+    <details style="margin-top:8px" open>
+      <summary style="cursor:pointer">Tests automatiques (qualité)</summary>
+      <div id="testStatus" class="sub" style="margin:6px 0">Exécution des tests…</div>
+      <ul id="testList" style="margin:0 0 12px 18px"></ul>
+    </details>
+  </main>
+
+  <!-- Drawer for details -->
+  <div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <div class="overlay" onclick="Drawer.close()"></div>
+    <div class="sheet">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <div>
+          <h2 id="dTitle"></h2>
+          <div id="dSub" class="sub"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn" id="dShare">Envoyer la situation</button>
+          <button class="btn" id="dDuplicate">Dupliquer</button>
+          <button class="btn icon" id="dEdit">✎ Modifier</button>
+          <button class="btn ghost" onclick="Drawer.close()">✕</button>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <div class="kv"><div class="k">Associé</div><div class="v" id="dAssoc"></div></div>
+        <div class="kv"><div class="k">Senior manager</div><div class="v" id="dSM"></div></div>
+        <div class="kv"><div class="k">Manager</div><div class="v" id="dMgr"></div></div>
+        <div class="kv" style="grid-column:1/-1"><div class="k">Équipe</div><div class="v" id="dTeam"></div></div>
+        <div class="kv"><div class="k">Ligne de service</div><div class="v" id="dServiceLine"></div></div>
+        <div class="kv"><div class="k">Étape</div><div class="v" id="dStage"></div></div>
+        <div class="kv"><div class="k">Deadline</div><div class="v" id="dDeadline"></div></div>
+      </div>
+
+      <!-- Section Finances -->
+      <div style="margin-top:20px;padding-top:16px;border-top:2px solid var(--financial-border)">
+        <h3 style="color:var(--primary);margin-bottom:12px">📊 État financier</h3>
+        <div class="row">
+          <div class="kv financial"><div class="k">Honoraires</div><div class="v" id="dFees"></div></div>
+          <div class="kv financial"><div class="k">Montant recouvré</div><div class="v" id="dCollected"></div></div>
+          <div class="kv financial"><div class="k">Pourcentage recouvré</div><div class="v" id="dCollectedPct"></div></div>
+          <div class="kv financial"><div class="k">Solde à recouvrer</div><div class="v" id="dBalance"></div></div>
+          <div class="kv financial"><div class="k">Date facturation</div><div class="v" id="dInvoiceDate"></div></div>
+          <div class="kv financial"><div class="k">Dernier encaissement</div><div class="v" id="dPaymentDate"></div></div>
+        </div>
+      </div>
+
+      <div class="timeline" id="dTimeline"></div>
+      <div id="dNotes"></div>
+
+      <div class="docs">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0">
+          <div style="font-weight:600">Documents</div>
+          <label class="btn">Uploader… <input id="fileInput" type="file" multiple style="display:none"></label>
+        </div>
+        <div id="docList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add/Edit -->
+  <dialog id="dlg">
+    <div class="modal-head">
+      <div style="font-weight:600" id="dlgTitle">Nouvelle mission</div>
+      <button class="btn ghost" onclick="Dlg.close()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="frm" class="form" onsubmit="return false">
+        <div>
+          <label>Référence</label>
+          <input name="ref" placeholder="Ex: JMC-2025-001" required />
+        </div>
+        <div>
+          <label>Client</label>
+          <input name="client" placeholder="Société…" required />
+        </div>
+        <div>
+          <label>Intitulé de la mission</label>
+          <input name="title" placeholder="Ex: Revue fiscale annuelle" required />
+        </div>
+        <div>
+          <label>Ligne de service</label>
+          <select name="serviceLine" required>
+            <option value="TLS">TLS (Tax & Legal Services)</option>
+            <option value="GCS">GCS (Global Compliance Services)</option>
+            <option value="LS">LS (Litigation Services)</option>
+            <option value="Advisory">Advisory</option>
+          </select>
+        </div>
+        <div>
+          <label>Étape</label>
+          <select name="stage" required id="stageSelect"></select>
+        </div>
+        <div>
+          <label>Associé</label>
+          <select name="associate" required id="assocSelect"></select>
+        </div>
+        <div>
+          <label>Senior manager</label>
+          <select name="senior_manager" required id="smSelect"></select>
+        </div>
+        <div>
+          <label>Manager</label>
+          <select name="manager" required id="mgrSelect"></select>
+        </div>
+        <div style="grid-column:1/-1">
+          <label>Équipe (multisélection en maintenant Ctrl/Cmd)</label>
+          <select name="team" multiple size="6" id="teamSelect"></select>
+        </div>
+        <div>
+          <label>Deadline</label>
+          <input name="deadline" type="date" />
+        </div>
+        <div style="grid-column:1/-1">
+          <label>Notes</label>
+          <textarea name="notes" placeholder="Contexte, échéances, conditions de paiement…"></textarea>
+        </div>
+        
+        <!-- Section Finances -->
+        <div style="grid-column:1/-1;margin-top:20px;padding-top:16px;border-top:2px solid var(--financial-border)">
+          <h3 style="color:var(--primary);margin-bottom:12px">📊 Informations financières</h3>
+          <div class="form" style="grid-template-columns:1fr 1fr 1fr">
+            <div>
+              <label>Honoraires (montant)</label>
+              <input name="fees" type="number" min="0" step="0.01" placeholder="45000000" />
+            </div>
+            <div>
+              <label>Devise</label>
+              <select name="currency">
+                <option value="GNF">GNF</option>
+                <option value="XOF">FCFA</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </div>
+            <div>
+              <label>Montant recouvré</label>
+              <input name="collected" type="number" min="0" step="0.01" placeholder="0" />
+            </div>
+            <div>
+              <label>Date facturation</label>
+              <input name="date_invoice" type="date" />
+            </div>
+            <div>
+              <label>Dernier encaissement</label>
+              <input name="date_payment" type="date" />
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="Dlg.close()">Annuler</button>
+      <button class="btn primary" id="btnSave">Enregistrer</button>
+    </div>
+  </dialog>
+
+  <!-- Modal: Partage / Email -->
+  <dialog id="dlgMail">
+    <div class="modal-head">
+      <div style="font-weight:600">Envoyer la situation du dossier</div>
+      <button class="btn ghost" onclick="MailDlg.close()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <button class="btn" id="btnToPartners">Aux associés</button>
+        <button class="btn" id="btnToManagers">Aux managers/Senior manager</button>
+        <button class="btn" id="btnToCurrent">Au binôme du dossier</button>
+      </div>
+      <form id="mailFrm" class="form" onsubmit="return false">
+        <div>
+          <label>À (emails séparés par des virgules)</label>
+          <input name="to" placeholder="ex: associe1@..., associe2@..." />
+        </div>
+        <div>
+          <label>CC</label>
+          <input name="cc" placeholder="ex: manager@..., senior@..." />
+        </div>
+        <div style="grid-column:1/-1">
+          <label>Objet</label>
+          <input name="subject" />
+        </div>
+        <div style="grid-column:1/-1">
+          <label>Contenu (aperçu)</label>
+          <textarea name="body"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="btnCopyMail">Copier le message</button>
+      <button class="btn primary" id="btnOpenMail">Ouvrir dans mon courriel</button>
+    </div>
+  </dialog>
+
+  <!-- Modal: Gestion des collaborateurs -->
+  <dialog id="dlgPeople">
+    <div class="modal-head">
+      <div style="font-weight:600">Gérer les collaborateurs</div>
+      <button class="btn ghost" onclick="PeopleDlg.close()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="peopleFrm" class="form" onsubmit="return false">
+        <div>
+          <label>Prénom</label>
+          <input name="firstName" required />
+        </div>
+        <div>
+          <label>Nom</label>
+          <input name="lastName" required />
+        </div>
+        <div>
+          <label>Email</label>
+          <input name="email" type="email" required />
+        </div>
+        <div>
+          <label>Grade</label>
+          <select name="grade" required>
+            <option value="associé">Associé</option>
+            <option value="senior manager">Senior manager</option>
+            <option value="manager">Manager</option>
+            <option value="senior">Senior</option>
+            <option value="junior">Junior</option>
+            <option value="stagiaire">Stagiaire</option>
+          </select>
+        </div>
+      </form>
+      <div class="modal-actions">
+        <button class="btn" onclick="PeopleDlg.add()">Ajouter</button>
+      </div>
+
+      <div style="margin-top:12px;font-weight:600">Liste des collaborateurs</div>
+      <div id="peopleList" class="sub" style="margin-top:6px"></div>
+    </div>
+  </dialog>
+
+  <script>
+    /* ==========================
+       Données & référentiels
+       ========================== */
+    const STAGES = [
+      // Étapes techniques
+      { id: 'opportunity', name: 'Opportunité' },
+      { id: 'lm_signed', name: 'Lettre de mission signée' },
+      { id: 'staff_work', name: 'En traitement — Staff' },
+      { id: 'manager_review', name: 'Revue — Manager' },
+      { id: 'sm_review', name: 'Revue — Senior Manager' },
+      { id: 'partner_validation', name: 'Validation — Associé(s)' },
+      { id: 'delivered', name: 'Livrables envoyés' },
+      // Étapes financières
+      { id: 'invoiced', name: 'Facturé', financial: true },
+      { id: 'partially_collected', name: 'Partiellement recouvré', financial: true },
+      { id: 'collected', name: 'Totalement recouvré', financial: true },
+      { id: 'closed', name: 'Clôturé', financial: true },
+    ];
+
+    const SERVICE_LINES = {
+      'TLS': 'TLS (Tax & Legal Services)',
+      'GCS': 'GCS (Global Compliance Services)',
+      'LS': 'LS (Litigation Services)',
+      'Advisory': 'Advisory'
+    };
+
+    // Référentiel de base (servira de base + collaborateurs ajoutés)
+    const PEOPLE_BASE = {
+      associates: ["Mohamed Baldé", "Adama Souaré", "Jean-Pascal Ouendéno"],
+      seniorManagers: ["Rajo Rakotosolofo"],
+      managers: ["Oumou Diallo"],
+      staff: ["Roger (Stagiaire)", "Koumandjan Traoré (Junior)", "Fatoumata Diaraye (Junior)", "Alassane (Senior)"],
+      emails: {
+        "Mohamed Baldé": "mohamed.balde@jmconsulting-gn.com",
+        "Adama Souaré": "adama.souare@jmconsulting-gn.com",
+        "Jean-Pascal Ouendéno": "jeanpascal.ouendeno@jmconsulting-gn.com",
+        "Rajo Rakotosolofo": "rajo.rakotosolofo@jmconsulting-gn.com",
+        "Oumou Diallo": "oumou.diallo@jmconsulting-gn.com"
+      }
+    };
+
+    // Objet PEOPLE dynamique (base + collaborateurs ajoutés)
+    let PEOPLE = JSON.parse(JSON.stringify(PEOPLE_BASE));
+
+    // Utilitaires
+    function escapeHtml(unsafe) {
+      if (typeof unsafe !== 'string') return unsafe;
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+    function isDeadlinePassed(deadline) {
+      if (!deadline) return false;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const deadlineDate = new Date(deadline);
+      return deadlineDate < today;
+    }
+    function isDeadlineNear(deadline) {
+      if (!deadline) return false;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const deadlineDate = new Date(deadline);
+      const threeDaysFromNow = new Date();
+      threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+      threeDaysFromNow.setHours(0, 0, 0, 0);
+      return deadlineDate >= today && deadlineDate <= threeDaysFromNow;
+    }
+    const fmtMoney = (n, curr='GNF') => { 
+      if(n === undefined || n === null || isNaN(n)) return '-'; 
+      try{ return new Intl.NumberFormat('fr-FR', { style:'currency', currency: curr }).format(Number(n)); }
+      catch{ return `${n} ${curr}`; }
+    };
+    const pct = (a,b) => { a = Number(a)||0; b = Number(b)||0; return b>0 ? Math.round((a/b)*100) : 0; };
+    const stageName = id => (STAGES.find(s=>s.id===id)||{}).name||id;
+    const stageColor = id => ({
+      opportunity:'amber', lm_signed:'primary', staff_work:'primary',
+      manager_review:'primary', sm_review:'primary', partner_validation:'primary',
+      delivered:'green', invoiced:'amber', partially_collected:'amber',
+      collected:'green', closed:'green'
+    })[id]||'';
+    const serviceLineName = id => SERVICE_LINES[id] || id;
+    const emailOf = (person)=> PEOPLE.emails[person] || '';
+
+    /* ==========================
+       Extraction des missions réelles (avec billable)
+       ========================== */
+    function extractRealMissions() {
+      // Missions de Koumandjan
+      const koumandjanData = [
+        ['', 'Colia Mining', 'Kamano', 'Assistance en matière de contrôle ponctuel initié par la DGI', '2025-07-14', '2025-07-22', 'JPO', 'Facturable', 'Voir lettre de mission', 'A la suite à la réunion tenue avec les agents des impôts dans nos locaux, nous avons communiqué une liste de documents à fournir par le client pour présentation lors de la prochaine séance de travail qui sera convenu avec les Inspecteurs des impôts. Action:  Suite au retour du client concernant l\'approche d\'une procédure de transaction, M. Pascal doit appeler le Chef de Mission pour lui expliquer les conditions proposées par le client.'],
+        ['', 'Colia Mining', 'Kamano', 'Réclamation contentieuse concernant l\'IS 2024', '2025-07-14', '', 'JPO', 'Facturable', 'Voir lettre de mission', 'Suite aux travaux d\'échanges avec l\'équipe de recouvrement, nous avons relancé le service DILECRI au sujet de nore lettre de réclamation contenteuse. Action: Je dois partir à la DGI pour obtenir des informations sur l\'évolution du dossier.'],
+        ['', 'Face Africa', 'Abdourahmane', 'Modalités de reconnaissance d\'un établissement stable.', '2025-07-17', 'Continue', 'JPO', 'Facturable', 'Voir lettre de mission', 'Nous avons déterminé avec le cabinet le budget à proposer au client. Action: nous devons revenir vers la personne contact pour savoir l\'évolution du dossier.'],
+        ['', 'COVEC', 'Liu', 'Revue des documents contractuels dans le cadre du projet Ageroute', '2025-07-31', 'Continue', 'JPO', '', 'voir lettre de mission', 'Nous avons effectué la revue de l\'accord de partenariat commercial et avons donné nos avis sur certaines questions accessoires.\nIl reste la revue finale de Memorandum d\'entente.\nAction: nous avons relancé le client 20/08/2025, par rapport à la validation des revues et la nécessité d\'entamer le deuxième volet des travaux. Il nous a fait comprendre que le dossier est toujours dans le circuit administratif pour signature.'],
+        ['', 'AEMS', 'Tafsiratou', 'Suivi de la liquidation de l\'AEMS Burkina Faso', '2025-06-10', 'Continue', 'JPO', 'Facturable', 'Voir lettre de mission', 'Le suivi de la procédure en cours avec la personne contact les chargés du dossier du côté de Burkina. Le retour des chargés est attendu sur le volet pénal et l\'avancement de la liquidation dans les jours à venir. Action: L\'Expert en liquidation devrait nous revenir le lundi avec le rapport préliminaire de la procédure. Il faudra lui relancer à ce sujet dans le groupe whatsapp ou par mail.'],
+        ['', 'JMC', 'JPO', 'Suivi des dossiers de rescrits fiscaux pendants à la DGI', '2025-08-25', '2025-08-27', 'JPO', 'Non facturable', 'voir lettre de mission', 'La lettre de relance a été déposée à la DGI. Action: Je dois partir cette à la DGI pour des informations sur l\'évolution du dossier.\n'],
+        ['', 'JMC', 'JPO', 'Suivi des dossiers contentieux en attente de traitement à la DGI', '2025-08-25', '2025-08-27', 'JPO', 'Non facturable', 'Voir lettre de mission', 'La lettre de relance a été déposée à la DGI. Action: Je doit partir cette à la DGI pour des informations sur l\'évolution du dossier.\n'],
+        ['', 'GKI', 'ELIE', 'Lettre de notification du paiement de la taxe aux pollutions/Sofamer', '2025-08-26', 'Continue', 'JPO', 'Facturable', 'Temps passé', 'Nous avons procédé à une contre évaluation du montant de la redevance annuelle qui a été transmise au client. Action: le client n\'ayant pas accusé reception depuis ce jour, je dois lui transmettre une demande de confirmation de notre mail.'],
+        ['', 'GKI', 'ELIE', 'DMU du mois d\'Août', '2025-08-26', 'Continue', 'JPO', 'Facturable', 'Voir lettre de mission', 'DMU a été préparée et envoyée au client.'],
+        ['', 'MSC', 'JPO', 'Déclaration sur E.tax', '2025-07-22', '2025-08-10', 'JOP', 'Non facturable', 'Voir lettre de mission', 'La déclaration mensuelle a été faite à néan et les documents de dédlaration ont été envoyés à JPO.'],
+        ['', 'WATG', 'JPO', 'Déclaration sur E.tax', '2025-07-22', '2025-08-10', 'JOP', 'Non facturable', 'Voir lettre de mission', 'La déclaration mensuelle a été faite à néan et les documents de dédlaration ont été envoyés à JPO.']
+      ];
+
+      // Missions de Roger
+      const rogerData = [
+        ['', 'JOE-ADAMS', '', 'Rescrit Fiscal de 20% de prélèvément', '2025-02-07', '2025-02-07', 'K.T; MOB', '', '', 'Action: Copier M. Pascal et Me Souaré sur le mail contenant le rescrit envoyé à M. Baldé'],
+        ['', 'JOE-ADAMS', '', 'Rescrit Fiscal sur l\'application des Droits de timbres', '2025-02-11', '2025-02-13', 'MOB', '', '', 'Action: Copier M. Pascal et Me Souaré sur le mail contenant le rescrit envoyé à M. Baldé'],
+        ['', 'JOE-ADAMS', '', 'Rescrit sur la cession d\'une universalité de biens à une filiale guinéenne', '2025-07-08', '', 'MAB', 'Facturable', 'lettre de mission', 'Action: j\'assure le suivi regulier. Cependant, le traitement tarde à ce jour suite au remaniement dont la DILECRI a fait l\'objet. Ainsi il m\'a été conseillé de passé voir le nouveau chef du service DILECRI afin de discuter du dossier avec lui (Mme. Marcéline).'],
+        ['', 'GKI', 'ELIE', 'Redévance de la taxe sur le prélèvement des ressources en eau', '2025-06-30', '', 'JPO', 'Facturable', 'Voir la lettre de mission', 'Observation: Dossier conclu d\'après Elie.'],
+        ['', 'SIM', 'Bethany', 'Renouvellement de l\'agrement.', '2024-10-09', '2025-05-30', 'JPO', 'Facturable', 'lettre de mission', 'À la suite d\'une demande par le client dans le cadre du renouvellement d\'agrément en date du 09 octobre 2024, nous avons collectés les dossiers puis déposé auprès du service DENAPROMA. Action : après que les dossiers soit reconstitué et déposé auprès de l\'administration, M. Pascal prendra rendez auprès de la directrice du MATD. Action: je dois me rendre à la DNAPROMA pour m\'enquerir de l\'état d\'avancement du dossier et sa situation dans le circuit de traitement et s\'il ya lieu, reconstituer le dossier et le déposer à nouveau.(transféré à Diaraye)\n'],
+        ['', 'NP OIL', '', 'Liasse Fiscale', '2025-09-11', '2025-09-10', 'FDB, KT', 'Facturable', 'lettre de mission', 'Action : J\'ai établi la liasse et soumis à Koumandjan.'],
+        ['', 'Yick Fung Boffa', 'Chen', 'Certification des Attestations de non-faillite, de Privilège et de non-nantissement', '2025-06-25', '2025-08-26', 'MAB, JPO', 'Facturable', 'Temps passé', 'Observation: Les documents déposés au Ministère des Affaires Etrangères tardent à être certifiés tandisque l\'urgence est présente et à ce jour le client nous fait constamment pression. Action: le courrier rédiger à l\'endroit du Ministre a été déposer au sécrétariat central du MAE à ce jour. Ainsi, j\'assure le suivi regulier du traitement de la demande par le cabinet du Ministre.'],
+        ['', 'world venture', 'Herosia', 'Delivrance du recépissé', '2024-08-09', '2025-05-09', 'JPO', 'Facturable', 'Temps passé', 'Mme herosia nous a adressé un mail en date du 04 octobre 2024 sollicitant la délivrance d\'un agrément, ainsi nous avons collectés les dossiers puis déposé auprès du service DENAPROMA. Action: je dois me rendre à la DNAPROMA pour m\'enquerir de l\'état d\'avancement du dossier et sa situation dans le circuit de traitement et s\'il ya lieu, reconstituer le dossier et le déposer à nouveau. (transféré à Diaraye)'],
+        ['', 'L\'Eglise de Jesus des Saints des derniers jours en Guinée', '', 'Renouvellement de l\'agrement.', '2025-08-26', '', 'JPO', 'Facturable', 'Temps passé', 'Action: Reconstitution du dossier. (transférer à Diaraye)'],
+        ['', 'GKI', 'Elie', 'Lettre de notification du paiement de la taxe aux pollutions/Sofamer', '2025-08-13', '', 'JPO', 'Facturable', 'Temps passé', 'Action: J\'ai contacté le chef section du service préfectorale des pollutions de Kankan afin de nous fournir les textes servants de bases légales à leur action. (Transféré à Koumadjan)']
+      ];
+
+      // Missions de Fatoumata
+      const fatoumataData = [
+        ['', 'ATS GUINEE', 'Ivana', 'Modification des statuts', '2025-07-18', '2025-08-29', 'MOB', 'Facturable', 'Suivant la lettre de mission', 'Le client nous a sollicité dans le cadre de la modification des statuts social de la société, la rédaction du PV de l\'assemblé ordinaire et la rédaction des contrats de session des parts. les projets ont été redigés et envoyés au client; il nous a fait un retour sur le rectification du nom du gérant. Action: procéder à la rectification demandée et renvoyé les documents au client. Le projet à été envoyé au client pour approbation en attente de son retour.'],
+        ['', 'ATS GUINEE', 'Ivana', 'Redaction du pacte d\'associés', '2025-08-07', '2025-08-29', 'AS', 'Facturable', 'Suivant la lettre de mission', 'Le client nous a sollicité dans le cadre de la modification de son pacte d\'associés. Action: le projet du pacte a été rediger, traduite et envoyé à Mr Souaré pour la revue. En attente de son retour pour l\'envoyer au client. Le projet à été envoyé chez client pour approbation. en attente de son retour.'],
+        ['', 'SIM', 'Bethany', 'Renouvellement de l\'agrement.', '2024-10-09', '2025-05-30', 'JPO', 'Facturable', 'Suivant la lettre de mission', 'À la suite de la demande du client relative au renouvellement d\'agrément en date du 09 octobre 2024, nous avons collecté et déposé les dossiers auprès du service DENAPROMA. Depuis le retour de congé de la Directrice du MATD, nous tentons d\'obtenir un rendez-vous avec elle afin de faciliter l\'avancement du dossier. Parallèlement, nous prévoyons de nous rendre à la DNAPROMA pour nous enquérir de l\'état de traitement du dossier et, si nécessaire, procéder à sa reconstitution et à un nouveau dépôt.'],
+        ['', 'world venture', 'Herosia', 'Delivrance du recépissé', '2024-08-09', '2025-05-09', 'JPO', 'Facturable', 'Suivant le temps passé', 'À la suite du courriel de Mme Herosia en date du 04 octobre 2024 sollicitant la délivrance d\'un agrément, nous avons collecté et déposé les dossiers auprès du service DENAPROMA. Nous prévoyons désormais de nous rendre à la DNAPROMA afin de nous enquérir de l\'état d\'avancement du dossier et de sa situation dans le circuit de traitement, et, le cas échéant, procéder à sa reconstitution en vue d\'un nouveau dépôt.'],
+        ['', 'L\'Eglise de Jesus des Saints des derniers jours en Guinée', '', 'Renouvellement de l\'agrement.', '2025-08-26', '', 'JPO', 'Facturable', 'Suivant le temps passé', 'Action: Reconstitution du dossier.'],
+        ['', 'Wassolon Négoce', 'Adama', 'Réclamation préalable devant l\'Administration', '2024-10-01', '', 'MOB', 'Facturable', 'Suivant le temps passé', 'Le client nous a sollicité dans le cadre de l\'introduction d\'une reclamation prealable devant l\'Administration fiscale suite à une Taxation d\'Office émise en contre elle.Action: le courrier a été preparé et introduit auprés de l\'Administration en date du 14 octobre 2024. Nous effectuons maintenant le suivi et restons en attente d\'une reponse de la part de l\'Administration.'],
+        ['', 'SGES', 'Ivonne', 'Réclamation préalable devant l\'Administration', '2024-04-01', '', 'MOB', 'Facturable', 'Suivant la lettre de mission', 'Dans le cadre des avis de mis en demeure reçus par le client, il nous a sollicité pour la redaction d\'un courrier de réponse à adresser à l\'Administration fiscale. Action: le courrier a été preparé et déposé auprés de l\'Administration en date du 04 septembre 2024. Nous effectuons maintenant le suivi et restons en attente d\'une reponse de la part de l\'Administration.'],
+        ['', 'CARPENTER', 'Oshan/Jagath', 'Avis de verification ponctuelle', '2025-09-15', '2025-09-29', 'MOB', 'Facturable', 'Suivant la lettre de mission', 'Le client a reçu un Avis de verification ponctuelle de l\'Administration. Reunir les documents requit pour le contrôle et les mettre à la disposition de l\'équipe chargée du contrôle.'],
+        ['', 'CAP MEDILINK', 'Joseph', 'Evaluation du traitement fiscal des perdiems', '2025-09-08', '2025-09-30', 'JPO', 'Facturable', 'Suivant la lettre de mission', 'Faire une etude sur le traitement fiscale propre aux perdiums versés aux salariés de CMG, et proposé une approche pour regularisation puis soumettre le projet à JPO pour revue.']
+      ];
+
+      const normalizeBillable = (v) => {
+        if(!v) return 'Non facturable';
+        const s = String(v).toLowerCase();
+        return s.includes('facturable') ? 'Facturable' : 'Non facturable';
+      };
+
+      const getAssociate = (supervisor) => {
+        if (!supervisor) return 'Mohamed Baldé';
+        if (supervisor.includes('JPO') || supervisor.includes('JOP')) return 'Jean-Pascal Ouendéno';
+        if (supervisor.includes('MOB') || supervisor.includes('MAB')) return 'Mohamed Baldé';
+        if (supervisor.includes('AS')) return 'Adama Souaré';
+        return 'Mohamed Baldé';
+      };
+
+      const missionsKoumandjan = koumandjanData.map(row => ({
+        client: row[1],
+        title: row[3],
+        date_opportunity: row[4],
+        deadline: row[5],
+        supervisor: row[6],
+        billable: normalizeBillable(row[7]),
+        notes: row[9],
+        collaborator: 'Koumandjan Traoré (Junior)'
+      }));
+
+      const missionsRoger = rogerData
+        .filter(row => row[1] && row[1].trim() !== '')
+        .map(row => ({
+          client: row[1],
+          title: row[3],
+          date_opportunity: row[4],
+          deadline: row[5],
+          supervisor: row[6],
+          billable: normalizeBillable(row[7]),
+          notes: row[9],
+          collaborator: 'Roger (Stagiaire)'
+        }));
+
+      const missionsFatoumata = fatoumataData.map(row => ({
+        client: row[1],
+        title: row[3],
+        date_opportunity: row[4],
+        deadline: row[5],
+        supervisor: row[6],
+        billable: normalizeBillable(row[7]),
+        notes: row[9],
+        collaborator: 'Fatoumata Diaraye (Junior)'
+      }));
+
+      const allMissions = [...missionsKoumandjan, ...missionsRoger, ...missionsFatoumata];
+
+      allMissions.sort((a, b) => {
+        if (a.date_opportunity && b.date_opportunity) {
+          return a.date_opportunity.localeCompare(b.date_opportunity);
+        } else if (a.date_opportunity) {
+          return -1;
+        } else if (b.date_opportunity) {
+          return 1;
+        } else {
+          return 0;
+        }
+      });
+
+      return allMissions.map((m, index) => {
+        const ref = `JMC-2025-${(index+1).toString().padStart(3, '0')}`;
+        return {
+          ref,
+          client: m.client,
+          title: m.title,
+          serviceLine: 'TLS',
+          stage: 'staff_work',
+          associate: getAssociate(m.supervisor),
+          senior_manager: 'Rajo Rakotosolofo',
+          manager: 'Oumou Diallo',
+          team: [m.collaborator],
+          billable: m.billable,
+          fees: 0,
+          currency: 'GNF',
+          collected: 0,
+          date_opportunity: m.date_opportunity || '',
+          date_lm: '',
+          date_deliverable: '',
+          date_invoice: '',
+          date_payment: '',
+          deadline: m.deadline === 'Continue' ? '' : (m.deadline || ''),
+          notes: m.notes || '',
+          docs: []
+        };
+      });
+    }
+
+    // Exemples réels extraits des fichiers
+    const REAL_MISSIONS = extractRealMissions();
+
+    /* ==========================
+       Stockage
+       ========================== */
+    const Store = {
+      key: 'jm_missions_real_v3',
+      logoKey: 'jm_logo_dataurl',
+      load(){ 
+        const raw = localStorage.getItem(this.key); 
+        if(!raw){ 
+          localStorage.setItem(this.key, JSON.stringify(REAL_MISSIONS)); 
+          return [...REAL_MISSIONS]; 
+        } 
+        try{ 
+          return JSON.parse(raw); 
+        }catch(e){ 
+          console.error("Erreur lors du parsing des données:", e);
+          return [...REAL_MISSIONS]; 
+        } 
+      },
+      save(list){ 
+        try {
+          localStorage.setItem(this.key, JSON.stringify(list)); 
+        } catch(e) {
+          console.error("Erreur lors de la sauvegarde des données:", e);
+          alert("Erreur de sauvegarde: " + e.message);
+        }
+      },
+      getLogo(){ return localStorage.getItem(this.logoKey) || ''; },
+      setLogo(dataUrl){ localStorage.setItem(this.logoKey, dataUrl); }
+    };
+
+    const CollabStore = {
+      key: 'jm_collaborators_v1',
+      load(){
+        const raw = localStorage.getItem(this.key);
+        if(!raw) return [];
+        try { return JSON.parse(raw); } catch { return []; }
+      },
+      save(arr){
+        localStorage.setItem(this.key, JSON.stringify(arr));
+      }
+    };
+
+    /* ==========================
+       PEOPLE dynamique (base + collaborateurs)
+       ========================== */
+    let CUSTOM_COLLABS = CollabStore.load(); // [{firstName,lastName,email,grade}]
+
+    function rebuildPeople(){
+      // Reset from base
+      PEOPLE = JSON.parse(JSON.stringify(PEOPLE_BASE));
+
+      for(const c of CUSTOM_COLLABS){
+        const full = `${c.firstName.trim()} ${c.lastName.trim()}`.trim();
+        const email = c.email.trim();
+        const grade = c.grade.toLowerCase();
+
+        if(grade === 'associé'){
+          if(!PEOPLE.associates.includes(full)) PEOPLE.associates.push(full);
+          PEOPLE.emails[full] = email;
+        } else if(grade === 'senior manager'){
+          if(!PEOPLE.seniorManagers.includes(full)) PEOPLE.seniorManagers.push(full);
+          PEOPLE.emails[full] = email;
+        } else if(grade === 'manager'){
+          if(!PEOPLE.managers.includes(full)) PEOPLE.managers.push(full);
+          PEOPLE.emails[full] = email;
+        } else {
+          // staff (senior, junior, stagiaire)
+          let suffix = '';
+          if(grade === 'senior') suffix = ' (Senior)';
+          if(grade === 'junior') suffix = ' (Junior)';
+          if(grade === 'stagiaire') suffix = ' (Stagiaire)';
+          const display = full + suffix;
+          if(!PEOPLE.staff.includes(display)) PEOPLE.staff.push(display);
+          PEOPLE.emails[full] = email; // email sans suffix
+        }
+      }
+      // rafraîchir les filtres et les selects si besoin
+      refreshFiltersOptions();
+    }
+
+    function refreshFiltersOptions(){
+      // Rafraîchir select des associés du filtre
+      const $assoc = document.getElementById('associate');
+      const currentVal = $assoc.value;
+      $assoc.innerHTML = '<option value="">Tous les associés</option>';
+      PEOPLE.associates.forEach(n=>{ 
+        const o=document.createElement('option'); o.value=n; o.textContent=n; $assoc.appendChild(o);
+      });
+      $assoc.value = currentVal;
+
+      // Rafraîchir légende des étapes (inchangé)
+      const $legend = document.getElementById('legend');
+      $legend.innerHTML = STAGES.map(s=>`<span class="chip ${s.financial?'financial':''}">${s.name}</span>`).join('');
+    }
+
+    function refreshDialogSelects(){
+      // Remplir les selects dans le formulaire "mission"
+      const $st = document.getElementById('stageSelect'); 
+      $st.innerHTML = ''; 
+      STAGES.forEach(s => { 
+        const o = document.createElement('option'); o.value = s.id; o.textContent = s.name; 
+        $st.appendChild(o); 
+      });
+
+      const $as = document.getElementById('assocSelect'); 
+      $as.innerHTML = '';
+      PEOPLE.associates.forEach(n => { 
+        const o = document.createElement('option'); o.value = n; o.textContent = n; 
+        $as.appendChild(o); 
+      });
+
+      const $sm = document.getElementById('smSelect'); 
+      $sm.innerHTML = '';
+      PEOPLE.seniorManagers.forEach(n => { 
+        const o = document.createElement('option'); o.value = n; o.textContent = n; 
+        $sm.appendChild(o); 
+      });
+
+      const $mg = document.getElementById('mgrSelect'); 
+      $mg.innerHTML = '';
+      PEOPLE.managers.forEach(n => { 
+        const o = document.createElement('option'); o.value = n; o.textContent = n; 
+        $mg.appendChild(o); 
+      });
+
+      const $tm = document.getElementById('teamSelect'); 
+      $tm.innerHTML = '';
+      PEOPLE.staff.forEach(n => { 
+        const o = document.createElement('option'); o.value = n; o.textContent = n; 
+        $tm.appendChild(o); 
+      });
+    }
+
+    /* ==========================
+       Rendu des vues (Kanban et Tableau)
+       ========================== */
+    let MISSIONS = Store.load();
+    let currentView = 'kanban'; // 'kanban' | 'table'
+
+    const $logo = document.getElementById('logo');
+    const $logoInput = document.getElementById('logoInput');
+    const $q = document.getElementById('q');
+    const $serviceLine = document.getElementById('serviceLine');
+    const $stage = document.getElementById('stage');
+    const $assoc = document.getElementById('associate');
+    const $kanban = document.getElementById('kanban');
+    const $tableWrap = document.getElementById('tableWrap');
+    const $btnToggleView = document.getElementById('btnToggleView');
+
+    function initLogo(){
+      const dataUrl = Store.getLogo();
+      if(dataUrl){ $logo.src = dataUrl; $logo.style.display='block'; }
+      $logoInput.onchange = async (e)=>{
+        const f = e.target.files[0]; if(!f) return;
+        const r = new FileReader();
+        r.onload = ()=>{ Store.setLogo(r.result); $logo.src = r.result; $logo.style.display='block'; };
+        r.readAsDataURL(f); e.target.value = '';
+      };
+    }
+
+    function initFilters(){
+      $stage.innerHTML = '<option value="">Toutes les étapes</option>' +
+        STAGES.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+
+      refreshFiltersOptions();
+    }
+
+    function applyFilters(list){
+      const q = $q.value.trim().toLowerCase();
+      const sl = $serviceLine.value;
+      const st = $stage.value;
+      const as = $assoc.value;
+      return list.filter(m=>{
+        if(sl && m.serviceLine!==sl) return false;
+        if(st && m.stage!==st) return false;
+        if(as && m.associate!==as) return false;
+        if(q){
+          const blob = [m.ref, m.client, m.title, m.serviceLine, m.associate, m.senior_manager, m.manager, (m.team||[]).join(' ')].join(' ').toLowerCase();
+          if(!blob.includes(q)) return false;
+        }
+        return true;
+      });
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function empty(){ return `<div style="color:var(--muted);font-size:12px;padding:8px">Aucun dossier</div>`; }
+
+    function renderBoard(){
+      const list = applyFilters(MISSIONS);
+      if(currentView === 'table'){
+        $kanban.style.display = 'none';
+        $tableWrap.style.display = 'block';
+        $tableWrap.innerHTML = renderTableView(list);
+        return;
+      }
+      $tableWrap.style.display = 'none';
+      $kanban.style.display = 'grid';
+
+      const cols = STAGES.map(s=>({stage:s.id, name:s.name, financial:s.financial, cards:[]}));
+      list.forEach(m=>{ const c = cols.find(c=>c.stage===m.stage); if(c) c.cards.push(m); });
+
+      $kanban.innerHTML = cols.map(col=>{
+        const cards = col.cards.map(m=>cardHTML(m)).join('');
+        return `<div class="col ${col.financial?'financial':''}">
+          <h3>${col.name} · ${col.cards.length}</h3>
+          <div class="lane" data-stage="${col.stage}" ondragover="dragOver(event)" ondrop="dropCard(event)">${cards || empty()}</div>
+        </div>`;
+      }).join('');
+
+      document.querySelectorAll('.card').forEach(el=>{
+        el.setAttribute('draggable','true');
+        el.addEventListener('dragstart', dragStart);
+      });
+
+      $btnToggleView.textContent = '🗂️ Vue tableau';
+    }
+
+    function renderTableView(list){
+      const rows = list.map(m => `
+        <tr>
+          <td><div class="pill">${escapeHtml(m.ref)}</div></td>
+          <td>${escapeHtml(m.client)}</td>
+          <td>
+            <div style="font-weight:600">${escapeHtml(m.title)}</div>
+            <div class="sub">Ligne: ${escapeHtml(serviceLineName(m.serviceLine))}</div>
+            ${m.notes ? `<div class="sub" style="white-space:pre-wrap;margin-top:6px">${escapeHtml(m.notes)}</div>` : ''}
+          </td>
+          <td>${escapeHtml(m.associate)}</td>
+          <td>${escapeHtml((m.team||[]).join(', '))}</td>
+          <td>
+            <div class="pill">${escapeHtml(stageName(m.stage))}</div>
+            <div class="sub" style="margin-top:6px">
+              ${m.billable === 'Facturable' ? '<span class="tag green">Facturable</span>' : '<span class="tag red">Non facturable</span>'}
+            </div>
+            ${m.deadline ? `<div style="margin-top:6px">${deadlineTag(m.deadline)}</div>` : ''}
+          </td>
+          <td>
+            <div class="sub">Honoraires: ${fmtMoney(m.fees, m.currency)}</div>
+            <div class="sub">Recouvré: ${fmtMoney(m.collected, m.currency)}</div>
+          </td>
+          <td style="white-space:nowrap">
+            <button class="btn small" title="Ouvrir" onclick="openDetails('${m.ref}')">👁️</button>
+            <button class="btn small" title="Modifier" onclick="editMission('${m.ref}')">✎</button>
+            <button class="btn small" title="Dupliquer" onclick="duplicateMission('${m.ref}')">⎘</button>
+            <button class="btn small" title="Envoyer la situation" onclick="shareMission('${m.ref}')">✉</button>
+          </td>
+        </tr>
+      `).join('');
+      const table = `
+        <table class="mission-table">
+          <thead>
+            <tr>
+              <th>Réf</th>
+              <th>Client</th>
+              <th>Mission</th>
+              <th>Associé</th>
+              <th>Équipe</th>
+              <th>Statut</th>
+              <th>Finances</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        ${list.length ? '' : empty()}
+      `;
+      $btnToggleView.textContent = '🧩 Vue kanban';
+      return table;
+    }
+
+    function deadlineTag(deadline){
+      if (!deadline) return '';
+      if (isDeadlinePassed(deadline)) {
+        return `<span class="tag deadline" title="Deadline dépassée">⚠️ ${formatDate(deadline)}</span>`;
+      } else if (isDeadlineNear(deadline)) {
+        return `<span class="tag amber" title="Deadline proche">⏳ ${formatDate(deadline)}</span>`;
+      }
+      return `<span class="tag" title="Deadline">📅 ${formatDate(deadline)}</span>`;
+    }
+
+    function cardHTML(m){
+      const percent = pct(m.collected||0, m.fees||0);
+      const isFinancial = STAGES.find(s => s.id === m.stage)?.financial || false;
+
+      let deadlineInfo = '';
+      if (m.deadline) deadlineInfo = deadlineTag(m.deadline);
+
+      return `<article class="card ${isFinancial?'financial':''}" data-ref="${m.ref}">
+        <div class="title" onclick="openDetails('${m.ref}')">${escapeHtml(m.client)} — <span style="opacity:.8">${escapeHtml(m.title)}</span></div>
+        <div class="card-actions">
+          <button class="btn icon" title="Modifier" onclick="editMission('${m.ref}')">✎</button>
+          <button class="btn icon" title="Dupliquer" onclick="duplicateMission('${m.ref}')">⎘</button>
+          <button class="btn icon" title="Envoyer la situation" onclick="shareMission('${m.ref}')">✉</button>
+        </div>
+        <div class="meta">
+          <span class="tag ${stageColor(m.stage)}">${escapeHtml(stageName(m.stage))}</span>
+          <span class="tag">${escapeHtml(serviceLineName(m.serviceLine))}</span>
+          <span class="tag">Assoc. ${escapeHtml(m.associate)}</span>
+          <span class="tag ${m.billable === 'Facturable' ? 'green' : 'red'}">${escapeHtml(m.billable || 'Non facturable')}</span>
+        </div>
+        ${deadlineInfo ? `<div class="meta">${deadlineInfo}</div>` : ''}
+        ${isFinancial ? `
+        <div class="progress"><div class="bar" style="width:${percent}%"></div></div>
+        <div class="meta" style="justify-content:space-between">
+          <span class="tag">Honoraires ${escapeHtml(fmtMoney(m.fees, m.currency))}</span>
+          <span class="tag ${percent===100?'green':percent>0?'amber':'red'}">Recouvré ${percent}%</span>
+        </div>
+        ` : ''}
+      </article>`;
+    }
+
+    /* ==========================
+       Drag & Drop
+       ========================== */
+    let DRAG_REF = null;
+    function dragStart(e){ DRAG_REF = e.currentTarget.getAttribute('data-ref'); e.dataTransfer.setData('text/plain', DRAG_REF); }
+    function dragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drop-target'); }
+    function dropCard(e){
+      e.preventDefault();
+      const stage = e.currentTarget.getAttribute('data-stage');
+      e.currentTarget.classList.remove('drop-target');
+      const m = MISSIONS.find(x=>x.ref===DRAG_REF); if(!m) return;
+      m.stage = stage;
+      Store.save(MISSIONS);
+      refresh();
+    }
+    document.addEventListener('dragleave', (e)=>{ if(e.target.classList && e.target.classList.contains('lane')) { e.target.classList.remove('drop-target'); } });
+
+    /* ==========================
+       Détails + Docs + Partage
+       ========================== */
+    const Drawer = {
+      el: document.getElementById('drawer'),
+      current:null,
+      open(m){
+        this.current = m;
+        this.el.classList.add('open');
+
+        document.getElementById('dTitle').textContent = `${m.client} — ${m.title}`;
+        document.getElementById('dSub').textContent = `${m.ref} · ${serviceLineName(m.serviceLine)} · ${stageName(m.stage)}`;
+        document.getElementById('dAssoc').textContent = m.associate;
+        document.getElementById('dSM').textContent = m.senior_manager;
+        document.getElementById('dMgr').textContent = m.manager;
+        document.getElementById('dTeam').textContent = (m.team||[]).join(', ');
+        document.getElementById('dServiceLine').textContent = serviceLineName(m.serviceLine);
+        document.getElementById('dStage').textContent = stageName(m.stage);
+        document.getElementById('dDeadline').textContent = m.deadline ? formatDate(m.deadline) : 'Non définie';
+
+        const p = pct(m.collected||0, m.fees||0);
+        document.getElementById('dFees').textContent = fmtMoney(m.fees, m.currency);
+        document.getElementById('dCollected').textContent = fmtMoney(m.collected, m.currency);
+        document.getElementById('dCollectedPct').textContent = `${p}%`;
+        document.getElementById('dBalance').textContent = fmtMoney((m.fees||0) - (m.collected||0), m.currency);
+        document.getElementById('dInvoiceDate').textContent = m.date_invoice ? formatDate(m.date_invoice) : '-';
+        document.getElementById('dPaymentDate').textContent = m.date_payment ? formatDate(m.date_payment) : '-';
+
+        const TL = [
+          ['Opportunité', m.date_opportunity],
+          ['Lettre de mission signée', m.date_lm],
+          ['Livrables envoyés', m.date_deliverable],
+          ['Facturation', m.date_invoice],
+          ['Dernier encaissement', m.date_payment],
+          ['Deadline', m.deadline]
+        ];
+        document.getElementById('dTimeline').innerHTML = TL.map(([k,v])=>`
+          <div class="item">
+            <div class="dot"></div>
+            <div>
+              <div style="font-weight:600">${k}</div>
+              <div class="sub">${v ? formatDate(v) : '—'}</div>
+            </div>
+          </div>
+        `).join('');
+
+        const $notes = document.getElementById('dNotes');
+        const notes = (m.notes||'').trim();
+        $notes.innerHTML = notes ? `
+          <div class="notes-block">
+            <div class="title">📝 Notes</div>
+            <div class="sub" style="white-space:pre-wrap">${escapeHtml(notes)}</div>
+          </div>
+        ` : '';
+
+        renderDocs(m);
+        document.getElementById('dEdit').onclick = ()=> editMission(m.ref);
+        document.getElementById('dShare').onclick = ()=> shareMission(m.ref);
+        document.getElementById('dDuplicate').onclick = ()=> duplicateMission(m.ref);
+      },
+      close(){ this.el.classList.remove('open'); this.current = null; }
+    };
+    window.Drawer = Drawer;
+
+    function renderDocs(m){
+      const list = m.docs || [];
+      const $list = document.getElementById('docList');
+      if(!list.length){ $list.innerHTML = `<div class="sub">Aucun document pour le moment.</div>`; }
+      else {
+        $list.innerHTML = list.map((d,i)=>`
+          <div class="doc">
+            <div>
+              <div style="font-weight:600">${escapeHtml(d.name)}</div>
+              <small>${d.type||'—'} · ${formatFileSize(d.size)} · ${d.uploadedAt||''}</small>
+            </div>
+            <div style="display:flex;gap:6px">
+              <a class="btn" download="${escapeHtml(d.name)}" href="${d.dataUrl}">Télécharger</a>
+              <button class="btn" onclick="deleteDoc('${m.ref}', ${i})">Supprimer</button>
+            </div>
+          </div>
+        `).join('');
+      }
+      const $input = document.getElementById('fileInput');
+      $input.onchange = async (e)=>{
+        const files = [...e.target.files]; if(!files.length) return;
+        for(const f of files){
+          const dataUrl = await fileToDataURL(f);
+          m.docs = m.docs || [];
+          m.docs.push({ name:f.name, size:f.size, type:f.type, dataUrl, uploadedAt: new Date().toLocaleString('fr-FR') });
+        }
+        Store.save(MISSIONS);
+        renderDocs(m);
+        e.target.value = '';
+      };
+    }
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 octets';
+      const k = 1024; const sizes = ['octets','Ko','Mo','Go']; const i = Math.floor(Math.log(bytes)/Math.log(k));
+      return parseFloat((bytes/Math.pow(k,i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    async function fileToDataURL(file){
+      return new Promise((resolve, reject)=>{
+        const r = new FileReader(); r.onload = ()=> resolve(r.result); r.onerror = reject; r.readAsDataURL(file);
+      });
+    }
+    function deleteDoc(ref, idx){
+      const m = MISSIONS.find(x=>x.ref===ref); if(!m || !m.docs) return;
+      m.docs.splice(idx,1); Store.save(MISSIONS);
+      if(Drawer.current && Drawer.current.ref === ref){ renderDocs(m); }
+    }
+    function openDetails(ref){ const m = MISSIONS.find(x=>x.ref===ref); if(!m) return; Drawer.open(m); }
+    window.openDetails = openDetails;
+
+    /* ==========================
+       Ajout/édition
+       ========================== */
+    const Dlg = {
+      el: document.getElementById('dlg'), mode: 'create', current: null,
+      open(mode='create', data=null){
+        this.mode = mode; this.current = data;
+        document.getElementById('dlgTitle').textContent = mode === 'edit' ? 'Modifier la mission' : 'Nouvelle mission';
+        refreshDialogSelects();
+
+        const f = document.getElementById('frm'); f.reset();
+
+        if(data){
+          Object.entries(data).forEach(([k, v])=>{
+            const el = f.elements[k]; if(!el) return;
+            if(el.tagName === 'SELECT' && el.multiple && Array.isArray(v)){
+              [...el.options].forEach(opt=>{ opt.selected = v.includes(opt.value); });
+            } else { el.value = v ?? ''; }
+          });
+        }
+        this.el.showModal();
+      },
+      close(){ this.el.close(); }
+    };
+    window.Dlg = Dlg;
+
+    function editMission(ref){ const m = MISSIONS.find(x=>x.ref===ref); if(!m) return; Dlg.open('edit', m); }
+    window.editMission = editMission;
+
+    function duplicateMission(ref){
+      const original = MISSIONS.find(m => m.ref === ref); if (!original) return;
+      const copy = JSON.parse(JSON.stringify(original));
+      const refPrefix = copy.ref.split('-').slice(0,2).join('-');
+      const samePrefixMissions = MISSIONS.filter(m => m.ref.startsWith(refPrefix));
+      const nextNum = samePrefixMissions.length + 1;
+      copy.ref = `${refPrefix}-${nextNum.toString().padStart(3,'0')}`;
+      copy.collected = 0; copy.docs = [];
+      copy.date_opportunity = ''; copy.date_lm = '';
+      copy.date_deliverable = ''; copy.date_invoice = ''; copy.date_payment = '';
+      Dlg.open('create', copy);
+    }
+    window.duplicateMission = duplicateMission;
+
+    document.getElementById('btnAdd').addEventListener('click', ()=> Dlg.open('create'));
+    document.getElementById('btnSave').addEventListener('click', ()=>{
+      const f = document.getElementById('frm');
+      const fd = Object.fromEntries(new FormData(f).entries());
+      fd.fees = Number(fd.fees || 0);
+      fd.collected = Number(fd.collected || 0);
+      const teamSel = f.elements['team'];
+      fd.team = [...teamSel.options].filter(o => o.selected).map(o => o.value);
+
+      if(Dlg.mode === 'edit' && Dlg.current){
+        const idx = MISSIONS.findIndex(x => x.ref === Dlg.current.ref);
+        if(idx > -1){ const docs = MISSIONS[idx].docs || []; MISSIONS[idx] = {...MISSIONS[idx], ...fd, docs}; }
+      } else {
+        if(MISSIONS.some(x => x.ref === fd.ref)) { alert('Référence déjà utilisée.'); return; }
+        fd.docs = []; MISSIONS.unshift(fd);
+      }
+      Store.save(MISSIONS); Dlg.close(); refresh();
+    });
+
+    /* ==========================
+       Partage (Email)
+       ========================== */
+    const MailDlg = {
+      el: document.getElementById('dlgMail'),
+      current: null,
+      open(m){
+        this.current = m; const f = document.getElementById('mailFrm'); f.reset();
+        f.elements['to'].value = emailOf(m.associate) || '';
+        const ccList = [emailOf(m.manager), emailOf(m.senior_manager)].filter(Boolean);
+        f.elements['cc'].value = ccList.join(', ');
+        f.elements['subject'].value = `[J&M] Situation du dossier ${m.ref} — ${m.client}`;
+        f.elements['body'].value = composeSituation(m);
+        this.el.showModal();
+      },
+      close(){ this.el.close(); }
+    };
+    window.MailDlg = MailDlg;
+
+    function composeSituation(m){
+      const p = pct(m.collected || 0, m.fees || 0);
+      const balance = (m.fees || 0) - (m.collected || 0);
+      const tl = [
+        ['Opportunité', m.date_opportunity],
+        ['Lettre de mission signée', m.date_lm],
+        ['Livrables envoyés', m.date_deliverable],
+        ['Facturation', m.date_invoice],
+        ['Dernier encaissement', m.date_payment],
+        ['Deadline', m.deadline]
+      ].filter(x => x[1]).map(([k, v]) => `- ${k}: ${v}`).join('\n');
+      const docs = (m.docs || []).map(d => `- ${d.name} (${d.type || 'type inconnu'})`).join('\n') || '(aucun document)';
+
+      return `Client: ${m.client}
+Référence: ${m.ref}
+Mission: ${m.title}
+Ligne de service: ${serviceLineName(m.serviceLine)}
+Étape: ${stageName(m.stage)}
+Associé: ${m.associate}
+Senior manager: ${m.senior_manager}
+Manager: ${m.manager}
+Équipe: ${(m.team || []).join(', ')}
+Facturation: ${m.billable || 'Non facturable'}
+
+INFORMATIONS FINANCIÈRES:
+Honoraires: ${fmtMoney(m.fees, m.currency)}
+Montant recouvré: ${fmtMoney(m.collected, m.currency)} (${p}%)
+Solde à recouvrer: ${fmtMoney(balance, m.currency)}
+Date de facturation: ${m.date_invoice || 'Non définie'}
+Dernier encaissement: ${m.date_payment || 'Aucun'}
+
+Chronologie:
+${tl || '(non renseignée)'}
+
+Documents:
+${docs}
+
+Notes:
+${m.notes || '(—)'}
+`;
+    }
+
+    function shareMission(ref){ const m = MISSIONS.find(x => x.ref === ref); if(!m) return; MailDlg.open(m); }
+    window.shareMission = shareMission;
+
+    document.getElementById('btnToPartners').addEventListener('click', ()=>{
+      const f = document.getElementById('mailFrm');
+      const to = PEOPLE.associates.map(n => emailOf(n)).filter(Boolean).join(', ');
+      f.elements['to'].value = to; f.elements['cc'].value = '';
+    });
+    document.getElementById('btnToManagers').addEventListener('click', ()=>{
+      const f = document.getElementById('mailFrm');
+      const list = [...PEOPLE.managers, ...PEOPLE.seniorManagers];
+      const to = list.map(n => emailOf(n)).filter(Boolean).join(', ');
+      f.elements['to'].value = to; f.elements['cc'].value = '';
+    });
+    document.getElementById('btnToCurrent').addEventListener('click', ()=>{
+      if(!MailDlg.current) return;
+      const f = document.getElementById('mailFrm'); const m = MailDlg.current;
+      f.elements['to'].value = emailOf(m.associate) || '';
+      f.elements['cc'].value = [emailOf(m.manager), emailOf(m.senior_manager)].filter(Boolean).join(', ');
+    });
+
+    document.getElementById('btnCopyMail').addEventListener('click', async ()=>{
+      const f = document.getElementById('mailFrm');
+      const txt = `Objet: ${f.elements['subject'].value}\n\n${f.elements['body'].value}`;
+      try{ await navigator.clipboard.writeText(txt); alert('Copié dans le presse-papiers.'); }
+      catch(e){
+        const textArea = document.createElement('textarea');
+        textArea.value = txt; document.body.appendChild(textArea); textArea.select();
+        document.execCommand('copy'); document.body.removeChild(textArea);
+        alert('Copié dans le presse-papiers.');
+      }
+    });
+    document.getElementById('btnOpenMail').addEventListener('click', ()=>{
+      const f = document.getElementById('mailFrm');
+      const to = (f.elements['to'].value || '').trim();
+      const cc = (f.elements['cc'].value || '').trim();
+      const subject = encodeURIComponent(f.elements['subject'].value || '');
+      const body = encodeURIComponent(f.elements['body'].value || '');
+      const mailto = `mailto:${encodeURIComponent(to)}?subject=${subject}${cc ? `&cc=${encodeURIComponent(cc)}` : ''}&body=${body}`;
+      window.location.href = mailto;
+    });
+
+    /* ==========================
+       Export CSV
+       ========================== */
+    function composeCSV(list){
+      const headers = ['ref','client','title','serviceLine','stage','associate','senior_manager','manager','team','billable','fees','currency','collected','date_opportunity','date_lm','date_deliverable','date_invoice','date_payment','deadline','notes'];
+      const rows = [headers.join(',')].concat(
+        list.map(m =>
+          headers.map(h => {
+            let v = (h === 'team') ? (m[h] || []).join('|') : (m[h] ?? '');
+            v = String(v).replaceAll('"', '""');
+            if(v.includes(',') || v.includes('\n')) v = '"' + v + '"';
+            return v;
+          }).join(',')
+        )
+      );
+      return rows.join('\n');
+    }
+    document.getElementById('btnExport').addEventListener('click', ()=>{
+      const list = applyFilters(MISSIONS);
+      const csv = composeCSV(list);
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'missions_jm_consulting.csv';
+      a.click(); URL.revokeObjectURL(a.href);
+    });
+
+    /* ==========================
+       Gestion des collaborateurs (UI + logique)
+       ========================== */
+    const PeopleDlg = {
+      el: document.getElementById('dlgPeople'),
+      listEl: document.getElementById('peopleList'),
+      open(){
+        this.renderList();
+        this.el.showModal();
+      },
+      close(){
+        this.el.close();
+      },
+      add(){
+        const f = document.getElementById('peopleFrm');
+        const fd = Object.fromEntries(new FormData(f).entries());
+        fd.firstName = (fd.firstName||'').trim();
+        fd.lastName = (fd.lastName||'').trim();
+        fd.email = (fd.email||'').trim();
+        fd.grade = (fd.grade||'').trim().toLowerCase();
+        if(!fd.firstName || !fd.lastName || !fd.email || !fd.grade){
+          alert('Veuillez remplir tous les champs.'); return;
+        }
+        if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(fd.email)){
+          alert('Email invalide.'); return;
+        }
+        CUSTOM_COLLABS.push(fd);
+        CollabStore.save(CUSTOM_COLLABS);
+        rebuildPeople();
+        this.renderList();
+        f.reset();
+        alert('Collaborateur ajouté.');
+      },
+      remove(idx){
+        if(!confirm('Supprimer ce collaborateur ?')) return;
+        CUSTOM_COLLABS.splice(idx,1);
+        CollabStore.save(CUSTOM_COLLABS);
+        rebuildPeople();
+        this.renderList();
+      },
+      renderList(){
+        if(!CUSTOM_COLLABS.length){
+          this.listEl.innerHTML = '<div class="sub">Aucun collaborateur ajouté.</div>';
+          return;
+        }
+        this.listEl.innerHTML = CUSTOM_COLLABS.map((c,i)=>{
+          const full = `${escapeHtml(c.firstName)} ${escapeHtml(c.lastName)}`;
+          return `<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding:8px 0">
+            <div>
+              <div style="font-weight:600">${full}</div>
+              <div class="sub">${escapeHtml(c.email)} · ${escapeHtml(c.grade)}</div>
+            </div>
+            <button class="btn" onclick="PeopleDlg.remove(${i})">Supprimer</button>
+          </div>`;
+        }).join('');
+      }
+    };
+    window.PeopleDlg = PeopleDlg;
+    document.getElementById('btnPeople').addEventListener('click', ()=> PeopleDlg.open());
+
+    /* ==========================
+       Tests
+       ========================== */
+    const __tests = [];
+    function t(name, fn){ try{ fn(); __tests.push({name, pass:true}); } catch(e){ console.error('Test échoué:', name, e); __tests.push({name, pass:false, err:e}); } }
+    function eq(actual, expected){ if(actual !== expected) throw new Error(`Attendu ${expected}, obtenu ${actual}`); }
+    function runTests(){
+      t('pct(50,100) == 50', ()=> eq(pct(50,100), 50));
+      t('pct division par zéro == 0', ()=> eq(pct(1,0), 0));
+      t('stageName(manager_review) → Revue — Manager', ()=> eq(stageName('manager_review'), 'Revue — Manager'));
+      const sample = [{ref:'T-1', client:'X', title:'Y', serviceLine:'GCS', stage:'opportunity', associate:'A', senior_manager:'SM', manager:'M', team:['u','v'], billable:'Facturable', fees:100, currency:'GNF', collected:50, date_opportunity:'2025-09-01', date_lm:'', date_deliverable:'', date_invoice:'', date_payment:'', deadline: '2025-10-01', notes:'hello,world\nnext'}];
+      const csv = composeCSV(sample);
+      t('CSV entête', ()=> { if(!csv.startsWith('ref,client,title')) throw new Error('Entête manquant'); });
+      t('CSV échappe virgules et sauts de ligne', ()=> { if(!csv.includes('"hello,world\nnext"')) throw new Error('Échappement incorrect'); });
+      const pass = __tests.filter(x => x.pass).length; const total = __tests.length;
+      document.getElementById('testStatus').textContent = `${pass}/${total} tests réussis`;
+      document.getElementById('testList').innerHTML = __tests.map(x => `<li>${x.pass ? '✅' : '❌'} ${x.name}</li>`).join('');
+    }
+
+    function refresh(){ renderBoard(); }
+
+    // Initialize
+    function init(){
+      rebuildPeople(); // construit PEOPLE dynamique
+      initLogo();
+      initFilters();
+      renderBoard();
+      runTests();
+
+      $q.addEventListener('input', refresh);
+      $serviceLine.addEventListener('change', refresh);
+      $stage.addEventListener('change', refresh);
+      $assoc.addEventListener('change', refresh);
+
+      $btnToggleView.addEventListener('click', ()=>{
+        currentView = currentView === 'kanban' ? 'table' : 'kanban';
+        renderBoard();
+      });
+    }
+    init();
+  </script>
+</body>
+</html>
+```
