@@ -1468,6 +1468,146 @@ ${m.notes || '(—)'}
       });
     }
     init();
+
+    /* ====== Bridge de synchro Supabase <-> modèle MISSIONS (lecture/écriture) ====== */
+// Utilise window.supabase initialisé dans <head>. Aucune UI d'auth n'est requise ici.
+
+async function __supaGetUser() {
+  if (!window.supabase) return null;
+  try {
+    const { data: { user }, error } = await window.supabase.auth.getUser();
+    if (error) throw error;
+    return user || null;
+  } catch { return null; }
+}
+
+// Charge les missions depuis Supabase et les mappe vers votre modèle UI
+async function __loadMissionsFromSupabase() {
+  const user = await __supaGetUser();
+  if (!user) return null;
+
+  const { data, error } = await window.supabase
+    .from('missions')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  return (data || []).map(row => ({
+    ref: row.ref,
+    client: row.client,
+    title: row.title,
+    serviceLine: row.service_line,
+    stage: row.stage,
+    associate: row.associate,
+    senior_manager: row.senior_manager,
+    manager: row.manager,
+    team: row.team || [],
+    billable: row.billable,
+    fees: Number(row.fees ?? 0),
+    currency: row.currency || 'GNF',
+    collected: Number(row.collected ?? 0),
+    date_opportunity: row.date_opportunity || '',
+    date_lm: row.date_lm || '',
+    date_deliverable: row.date_deliverable || '',
+    date_invoice: row.date_invoice || '',
+    date_payment: row.date_payment || '',
+    deadline: row.deadline || '',
+    notes: row.notes || '',
+    // on garde votre structure actuelle; l’upload Storage viendra en Mise à jour n°3
+    docs: Array.isArray(row.docs) ? row.docs : []
+  }));
+}
+
+// Upsert d’UNE mission dans Supabase (clé fonctionnelle = ref)
+async function __upsertOneMissionToSupabase(m) {
+  const user = await __supaGetUser();
+  if (!user) return; // hors session : ne rien pousser
+
+  const payload = {
+    ref: m.ref,
+    client: m.client,
+    title: m.title,
+    service_line: m.serviceLine,
+    stage: m.stage,
+    associate: m.associate,
+    senior_manager: m.senior_manager,
+    manager: m.manager,
+    team: Array.isArray(m.team) ? m.team : [],
+    billable: m.billable || null,
+    fees: (m.fees === '' ? null : m.fees),
+    currency: m.currency || 'GNF',
+    collected: (m.collected === '' ? null : m.collected),
+    date_opportunity: m.date_opportunity || null,
+    date_lm: m.date_lm || null,
+    date_deliverable: m.date_deliverable || null,
+    date_invoice: m.date_invoice || null,
+    date_payment: m.date_payment || null,
+    deadline: m.deadline || null,
+    notes: m.notes || null,
+    docs: Array.isArray(m.docs) ? m.docs : [],
+    created_by: user.id
+  };
+
+  const { error } = await window.supabase
+    .from('missions')
+    .upsert(payload, { onConflict: 'ref' });
+  if (error) throw error;
+}
+
+// Push de TOUTE la liste (simple boucle; assez pour démarrer)
+async function __pushAllMissionsToSupabase(list) {
+  const user = await __supaGetUser();
+  if (!user) return;
+  for (const m of (list || [])) {
+    try { await __upsertOneMissionToSupabase(m); }
+    catch(e) { console.error('[SYNC] Upsert échoué', m?.ref, e); }
+  }
+}
+
+// Active la synchro : charge le cloud si dispo, puis surclasse Store.save pour pousser au cloud
+async function enableSupabaseSync() {
+  try {
+    const user = await __supaGetUser();
+    if (!user) return; // déconnecté → mode 100% local
+
+    const remote = await __loadMissionsFromSupabase();
+    if (remote && remote.length) {
+      // Remplace le modèle par le cloud et cache localement
+      window.MISSIONS = remote;
+      Store.save(remote);
+      if (typeof refresh === 'function') refresh();
+    } else {
+      // Première connexion : on pousse vos données locales en base
+      await __pushAllMissionsToSupabase(window.MISSIONS || []);
+    }
+
+    // Surclasse Store.save : continue d’écrire en local + pousse au cloud si connecté
+    const __saveLocal = Store.save.bind(Store);
+    Store.save = function(list){
+      __saveLocal(list);
+      __pushAllMissionsToSupabase(list).catch(err => console.error('[SYNC] pushAll échouée:', err));
+    };
+
+    console.log('[SYNC] Supabase activée');
+  } catch(e) {
+    console.warn('[SYNC] Non activée (mode local) :', e?.message || e);
+  }
+}
+
+// Réagit aux changements de session (si l’utilisateur se connecte via lien magique)
+if (window.supabase && window.supabase.auth) {
+  window.supabase.auth.onAuthStateChange((_evt, session) => {
+    if (session) { enableSupabaseSync(); }
+  });
+}
+// Au chargement : si déjà connecté, activer la synchro immédiatement
+(async function __bootstrapCloud(){
+  if (window.supabase) {
+    try { await enableSupabaseSync(); } catch {}
+  }
+})();
+
   </script>
 </body>
 </html>
