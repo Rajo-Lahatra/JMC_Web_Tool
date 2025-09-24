@@ -4,6 +4,68 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>J&M Consulting Guinée — Suivi des missions</title>
+
+  <!-- Préconnexion utile pour l'import ESM -->
+  <link rel="preconnect" href="https://esm.sh" crossorigin>
+
+  <!-- Configuration Supabase (OK pour démarrer, RLS activées côté DB) -->
+  <script>
+    window.APP_CONFIG = {
+      SUPABASE_URL: "https://cwslqvsbniduwhkaevtu.supabase.co",
+      SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3c2xxdnNibmlkdXdoa2FldnR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MDU2NjEsImV4cCI6MjA3NDI4MTY2MX0.MHL9WdCB4a8ZtrQY97OmW7PoK3GabTS9TXbcamOF1xU"
+    };
+  </script>
+
+  <!-- SDK Supabase : client global + gestion de session -->
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG || {};
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.warn("Supabase non configuré : renseignez APP_CONFIG dans <head>.");
+    } else {
+      // Client global accessible partout
+      window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      // Mise à jour de l'attribut data-auth sur <html> selon la session
+      function applyAuthState(session) {
+        document.documentElement.dataset.auth = session ? "in" : "out";
+        window.__session = session || null;
+      }
+
+      // Sur changements d'auth
+      window.supabase.auth.onAuthStateChange((_event, session) => applyAuthState(session));
+
+      // Au chargement : récupérer la session existante
+      (async () => {
+        try {
+          const { data: { session } } = await window.supabase.auth.getSession();
+          applyAuthState(session);
+        } catch (e) {
+          console.error("Erreur init session:", e);
+        }
+      })();
+
+      // Helpers simples utilisables dans le body
+      window.appAuth = {
+        async signInWithEmailOtp(email) {
+          const { error } = await window.supabase.auth.signInWithOtp({ email });
+          if (error) throw error;
+          return true;
+        },
+        async signOut() {
+          const { error } = await window.supabase.auth.signOut();
+          if (error) throw error;
+          return true;
+        },
+        async getUser() {
+          const { data: { user } } = await window.supabase.auth.getUser();
+          return user;
+        }
+      };
+    }
+  </script>
+
   <style>
     :root{
       /* Thème doux */
@@ -150,6 +212,10 @@
 
     /* Collaborateurs */
     .pill{display:inline-block;padding:3px 8px;border:1px solid var(--border);border-radius:999px;background:#fff;color:var(--muted);font-size:12px}
+
+    /* Hooks d'auth pour masquer/afficher des blocs sans JS supplémentaire */
+    [data-auth="out"] .requires-auth { display:none !important; }
+    [data-auth="in"]  .requires-guest { display:none !important; }
 
     /* Réactivité */
     @media (max-width:1400px){.board{grid-template-columns:repeat(3,1fr)}}
