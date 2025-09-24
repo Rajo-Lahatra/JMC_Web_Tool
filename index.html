@@ -231,14 +231,18 @@
 <body>
   <header>
     <div class="wrap">
-      <div class="brand">
-        <img id="logo" alt="Logo J&M"/>
-        <div>
-          <h1>J&M Consulting Guinée — Suivi des missions</h1>
-          <div class="sub">Pipeline : Opportunité → Lettre de mission signée → Travail Staff → Revue Manager → Revue Senior Manager → Validation Associé(s) → Livrables → Facturation → Recouvrement → Clôture</div>
-        </div>
-        <label class="btn" style="margin-left:auto">Définir le logo…<input id="logoInput" type="file" accept="image/*" style="display:none"></label>
-      </div>
+      <!-- Auth bar (connexion/déconnexion) -->
+<div class="requires-guest" style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+  <input id="loginEmail" type="email" placeholder="Votre e-mail professionnel" 
+         style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;min-width:260px" />
+  <button class="btn" id="btnLogin">Se connecter</button>
+  <span class="sub">Un lien magique vous sera envoyé.</span>
+</div>
+
+<div class="requires-auth" style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+  <span class="sub" id="sessionInfo">Connecté</span>
+  <button class="btn" id="btnLogout">Se déconnecter</button>
+</div>
       <div class="toolbar">
         <input id="q" type="search" placeholder="Rechercher (client, mission, référence, équipe)…" />
         <select id="serviceLine">
@@ -1640,8 +1644,42 @@ if (window.supabase && window.supabase.auth) {
       } catch {}
       setTimeout(refreshSessionBanner, 4000);
     })();
-  })();
+  }
   </script>
+  <script>
+  // Câblage des boutons de la barre d'auth (utilise window.appAuth déjà défini dans <head>)
+  (function wireAuth() {
+    const $login = document.getElementById('btnLogin');
+    const $logout = document.getElementById('btnLogout');
+    const $email = document.getElementById('loginEmail');
+    const $info  = document.getElementById('sessionInfo');
+
+    if ($login) $login.onclick = async () => {
+      const email = ($email?.value || '').trim();
+      if (!email) { alert('Veuillez saisir votre e-mail.'); return; }
+      try {
+        await window.appAuth.signInWithEmailOtp(email);
+        alert('Lien magique envoyé. Consultez votre e-mail.');
+      } catch (e) {
+        alert('Erreur de connexion : ' + (e?.message || e));
+      }
+    };
+
+    if ($logout) $logout.onclick = async () => {
+      try { await window.appAuth.signOut(); } catch(e) { alert(e?.message || e); }
+    };
+
+    // Mise à jour périodique de l'étiquette de session
+    (async function refreshSessionBanner() {
+      try {
+        const { data: { user } } = await window.supabase.auth.getUser();
+        if ($info) $info.textContent = user ? `Connecté : ${user.email}` : 'Déconnecté';
+      } catch {}
+      setTimeout(refreshSessionBanner, 4000);
+    })();
+  })();
+</script>
+
 </body>
 </html>
 ```
