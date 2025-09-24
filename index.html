@@ -1619,6 +1619,12 @@ if (window.supabase && window.supabase.auth) {
     try { await enableSupabaseSync(); } catch {}
   }
 })();
+      // Au chargement : si déjà connecté, activer la synchro immédiatement
+  (async function __bootstrapCloud(){
+    if (window.supabase) {
+      try { await enableSupabaseSync(); } catch(e){ console.warn('bootstrapCloud:', e?.message || e); }
+    }
+  })();
 // Barre de connexion/déconnexion (utilise window.appAuth défini dans <head>)
   (function wireAuth() {
     const $login = document.getElementById('btnLogin');
